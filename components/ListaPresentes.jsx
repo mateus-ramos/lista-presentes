@@ -1,25 +1,14 @@
-'use client';
-
 import { useState } from 'react';
-import { loadStripe } from '@stripe/stripe-js';
 import { motion } from 'framer-motion';
-
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY);
-
-const gifts = [
-  { id: 1, name: 'Panela de Arroz Elétrica', price: 2500, image: '/gifts/panela.png' },
-  { id: 2, name: 'Liquidificador Turbo', price: 1800, image: '/gifts/liquidificador.png' },
-  { id: 3, name: 'Jantar Romântico', price: 4000, image: '/gifts/jantar.png' },
-];
+import gifts from '../data/gifts';
 
 export default function ListaPresentes() {
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(null);
 
   const handleCheckout = async (gift) => {
-    setLoading(true);
-    const stripe = await stripePromise;
+    setLoading(gift.id);
 
-    const response = await fetch('/api/checkout/', {
+    const response = await fetch('/api/checkout', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ item: gift }),
@@ -27,48 +16,60 @@ export default function ListaPresentes() {
 
     if (!response.ok) {
       alert('Erro ao iniciar pagamento. Tente novamente.');
-      setLoading(false);
+      setLoading(null);
       return;
     }
 
-    const session = await response.json();
-    await stripe.redirectToCheckout({ sessionId: session.id });
-    setLoading(false);
+    const { init_point } = await response.json();
+    window.location.href = init_point;
+    setLoading(null);
   };
 
+  const renderGiftCard = (gift) => (
+    <motion.div
+      key={gift.id}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+      className="rounded-2xl shadow-md bg-white overflow-hidden flex flex-col border border-[#c5b358]"
+    >
+      <img src={gift.image} alt={gift.name} className="w-full h-48 object-cover" />
+      <div className="p-4 flex flex-col flex-grow justify-between">
+        <div>
+          <h2 className="text-md font-semibold text-center text-[#3c4b3f] mb-2">{gift.name}</h2>
+          <p className="text-sm text-[#6b6b6b] text-center mb-4">R$ {(gift.price / 100).toFixed(2)}</p>
+        </div>
+        <button
+          onClick={() => handleCheckout(gift)}
+          disabled={loading === gift.id}
+          className="bg-[#c5b358] text-white font-semibold px-4 py-2 rounded-lg hover:bg-[#b4a146] transition disabled:opacity-50"
+        >
+          {loading === gift.id ? 'Redirecionando...' : 'Presentear 🎁'}
+        </button>
+      </div>
+    </motion.div>
+  );
+
   return (
-    <div className="p-4 max-w-4xl mx-auto">
-      <h1 className="text-3xl font-bold text-center mb-6">🎁 Lista de Presentes dos Noivos</h1>
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-        {gifts.map((gift) => (
-          <motion.div
-            key={gift.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4 }}
-          >
-            <div className="rounded-2xl shadow-lg bg-white">
-              <img
-                src={gift.image}
-                alt={gift.name}
-                className="w-full h-48 object-cover rounded-t-2xl"
-              />
-              <div className="p-4 flex flex-col items-center">
-                <h2 className="text-xl font-semibold text-center text-gray-500 mb-2">{gift.name}</h2>
-                <p className="text-sm text-gray-500 mb-4">
-                  R$ {(gift.price / 100).toFixed(2)}
-                </p>
-                <button
-                  onClick={() => handleCheckout(gift)}
-                  disabled={loading}
-                  className="bg-pink-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-pink-600 transition"
-                >
-                  Presentear 🎉
-                </button>
-              </div>
-            </div>
-          </motion.div>
-        ))}
+    <div className="p-6 max-w-7xl mx-auto bg-white min-h-screen">
+      <h1 className="text-4xl font-bold text-center text-[#3c4b3f] mb-2">Lista de Presentes dos Noivos</h1>
+      <p className="text-center text-[#6b6b6b] max-w-2xl mx-auto mb-8">
+        Queridos amigos e familiares, agradecemos por fazerem parte desse momento tão especial.
+        Abaixo, preparamos uma lista com opções divertidas e também itens para nossa nova casa. Fiquem à vontade para escolher com carinho ♥️
+      </p>
+
+      <div className="mb-10">
+        <h2 className="text-2xl font-bold text-[#3c4b3f] mb-4 border-b pb-1 border-[#c5b358]">🎉 Itens Divertidos</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {gifts.filter(g => g.id <= 20).map(renderGiftCard)}
+        </div>
+      </div>
+
+      <div>
+        <h2 className="text-2xl font-bold text-[#3c4b3f] mb-4 border-b pb-1 border-[#c5b358]">🏠 Itens para a Casa Nova</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {gifts.filter(g => g.id > 20).map(renderGiftCard)}
+        </div>
       </div>
     </div>
   );
