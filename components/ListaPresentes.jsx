@@ -4,6 +4,8 @@ import gifts from '../data/gifts';
 
 export default function ListaPresentes() {
   const [loading, setLoading] = useState(null);
+  const chavePix = 'mateus.ramos96@outlook.com'; // Substitua pela sua chave Pix real
+  const [copiado, setCopiado] = useState(false);
 
   const handleCheckout = async (gift) => {
     setLoading(gift.id);
@@ -23,6 +25,16 @@ export default function ListaPresentes() {
     const { init_point } = await response.json();
     window.location.href = init_point;
     setLoading(null);
+  };
+
+  const copiarPix = async () => {
+    try {
+      await navigator.clipboard.writeText(chavePix);
+      setCopiado(true);
+      setTimeout(() => setCopiado(false), 2000);
+    } catch (error) {
+      console.error('Erro ao copiar chave Pix:', error);
+    }
   };
 
   const renderGiftCard = (gift) => (
@@ -61,14 +73,28 @@ export default function ListaPresentes() {
       <div className="mb-10">
         <h2 className="text-2xl font-bold text-[#3c4b3f] mb-4 border-b pb-1 border-[#c5b358]">🎉 Itens Divertidos</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {gifts.filter(g => g.id <= 20).map(renderGiftCard)}
+          {gifts.filter(g => g.id <= 12).map(renderGiftCard)}
         </div>
       </div>
 
       <div>
         <h2 className="text-2xl font-bold text-[#3c4b3f] mb-4 border-b pb-1 border-[#c5b358]">🏠 Itens para a Casa Nova</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {gifts.filter(g => g.id > 20).map(renderGiftCard)}
+          {gifts.filter(g => g.id > 12).map(renderGiftCard)}
+        </div>
+      </div>
+      <div className="mt-12 text-center border-t pt-6 border-olive-200 bg-white">
+        <h2 className="text-2xl font-semibold mb-2 text-yellow-800">💸 Quer deixar só um mimo no nosso Pix?</h2>
+        <p className="mb-4 text-olive-700 text-[#6b6b6b]">A gente aceita com alegria, sorriso no rosto e muito amor no coração! 😍</p>
+
+        <div className="inline-flex flex-col items-center gap-2 bg-yellow-100 p-4 rounded-xl text-yellow-900">
+          <span className="font-mono text-lg">{chavePix}</span>
+          <button
+            onClick={copiarPix}
+            className="bg-yellow-600 text-white px-3 py-1 rounded hover:bg-yellow-700 transition text-sm"
+          >
+            {copiado ? 'Chave copiada! ✅' : 'Copiar chave Pix'}
+          </button>
         </div>
       </div>
     </div>
